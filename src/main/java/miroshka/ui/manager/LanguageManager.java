@@ -1,4 +1,4 @@
-package miroshka.ui;
+package miroshka.ui.manager;
 
 import java.util.Locale;
 import java.util.ResourceBundle;

@@ -1,4 +1,4 @@
-package miroshka.ui;
+package miroshka.ui.manager;
 
 import javax.swing.*;
 import java.io.File;

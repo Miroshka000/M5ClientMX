@@ -1,4 +1,4 @@
-package miroshka.ui;
+package miroshka.ui.manager;
 
 import javax.swing.*;
 import java.io.File;
@@ -6,35 +6,34 @@ import java.io.IOException;
 import miroshka.downloader.FileDownloader;
 import miroshka.installer.DependencyInstaller;
 import miroshka.serial.SerialPortHandler;
+import miroshka.ui.M5ClientUI;
 
 public class FirmwareManager {
     private String currentFirmware = "CatHack";
     private LanguageManager languageManager;
     private M5ClientUI ui;
+    private JLabel firmwareImageLabel;
 
-    public FirmwareManager(LanguageManager languageManager, M5ClientUI ui) {
+    public FirmwareManager(LanguageManager languageManager, M5ClientUI ui, JLabel firmwareImageLabel) {
         this.languageManager = languageManager;
         this.ui = ui;
+        this.firmwareImageLabel = firmwareImageLabel;
     }
 
     public String[] getAvailablePorts() {
         return SerialPortHandler.getAvailablePorts().toArray(new String[0]);
     }
 
-    public void installFirmware(JLabel statusLabel, JComboBox<String> comPortCombo) {
-        String selectedPort = (String) comPortCombo.getSelectedItem();
+    public void installFirmware(JLabel statusLabel, String selectedPort) {
         if (selectedPort == null || selectedPort.isEmpty()) {
             statusLabel.setText(languageManager.getText("status.noPort"));
             ui.appendToConsole("No port selected.");
             return;
         }
-
         DependencyInstaller.installDependencies(statusLabel, languageManager);
-
         File firmwareFile = new File("latest_firmware.bin");
         statusLabel.setText(languageManager.getText("status.installing"));
         ui.appendToConsole("Starting firmware installation...");
-
         new Thread(() -> {
             try {
                 if (!firmwareFile.exists()) {
@@ -56,7 +55,7 @@ public class FirmwareManager {
         }).start();
     }
 
-    public void switchFirmware(JLabel firmwareImageLabel, JLabel statusLabel) {
+    public void switchFirmware() {
         if ("CatHack".equals(currentFirmware)) {
             currentFirmware = "Bruce";
             firmwareImageLabel.setIcon(new ImageIcon(getClass().getResource("/images/bruce.png")));
@@ -67,7 +66,6 @@ public class FirmwareManager {
             currentFirmware = "CatHack";
             firmwareImageLabel.setIcon(new ImageIcon(getClass().getResource("/images/cathack.png")));
         }
-        statusLabel.setText(languageManager.getText("status.switched") + currentFirmware);
     }
 
     private String getFirmwareURL() {

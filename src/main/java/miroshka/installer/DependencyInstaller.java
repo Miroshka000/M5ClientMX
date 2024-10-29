@@ -1,7 +1,7 @@
 package miroshka.installer;
 
 import miroshka.downloader.FileDownloader;
-import miroshka.ui.LanguageManager;
+import miroshka.ui.manager.LanguageManager;
 import miroshka.ui.M5ClientUI;
 
 import javax.swing.*;
@@ -10,13 +10,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class DependencyInstaller {
-    private static final String ESPTOOL_URL = "https://github.com/espressif/esptool/releases/download/v4.8.1/esptool-v4.8.1-win64.zip";
-    private static final File ESPTOOL_ZIP = new File("esptool.zip");
-    private static final File ESPTOOL_DIR = new File("esptool-win64");
+    private static final File CURRENT_DIR = new File(System.getProperty("user.dir"), "esptool");
+    private static final File ESPTOOL_ZIP = new File(CURRENT_DIR, "esptool.zip");
+    private static final File ESPTOOL_DIR = new File(CURRENT_DIR, "esptool-win64");
     private static final File ESPTOOL_EXECUTABLE = new File(ESPTOOL_DIR, "esptool.exe");
 
+    private static final String ESPTOOL_URL = "https://github.com/espressif/esptool/releases/download/v4.8.1/esptool-v4.8.1-win64.zip";
     private static final String DRIVER_URL = "https://github.com/Teapot321/M5Client/raw/refs/heads/main/CH341SER.EXE";
-    private static final File DRIVER_FILE = new File("CH341SER.EXE");
+    private static final File DRIVER_FILE = new File(CURRENT_DIR, "CH341SER.EXE");
 
     public static void installDependencies(JLabel statusLabel, LanguageManager languageManager) {
         try {
@@ -40,6 +41,11 @@ public class DependencyInstaller {
         if (!ESPTOOL_EXECUTABLE.exists()) {
             System.out.println("Downloading esptool...");
             FileDownloader.downloadFile(ESPTOOL_URL, ESPTOOL_ZIP);
+
+            if (!ESPTOOL_DIR.exists()) {
+                ESPTOOL_DIR.mkdirs();
+            }
+
             unzipEsptool(ESPTOOL_ZIP, ESPTOOL_DIR);
             ESPTOOL_ZIP.delete();
 

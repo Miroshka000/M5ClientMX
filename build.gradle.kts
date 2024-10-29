@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("application")
-    id("edu.sc.seis.launch4j") version "2.5.0" // Плагин Launch4j
+    id("edu.sc.seis.launch4j") version "2.5.0"
 }
 
 group = "miroshka"
@@ -32,8 +32,8 @@ launch4j {
     outfile = "${project.name}.exe"
     jreMinVersion = "11"
     headerType = "gui"
+    icon = "src/main/resources/icon.ico"
 }
-
 
 tasks.named("launch4j").configure {
     dependsOn(tasks.named("jar"))
