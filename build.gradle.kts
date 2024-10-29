@@ -32,7 +32,6 @@ launch4j {
     outfile = "${project.name}.exe"
     jreMinVersion = "11"
     headerType = "gui"
-    icon = "src/main/resources/icon.ico"
 }
 
 tasks.named("launch4j").configure {
