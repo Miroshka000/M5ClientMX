@@ -62,6 +62,7 @@ jlink {
     jpackage {
         imageName = "M5ClientMX"
         outputDir = "$buildDir/installer"
+        installerType = "exe"
         installerOptions = listOf(
             "--win-per-user-install",
             "--win-shortcut",

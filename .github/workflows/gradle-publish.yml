@@ -35,6 +35,13 @@ jobs:
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "TAG=v$version" >> $GITHUB_ENV
 
+      - name: Create Git Tag
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ env.TAG }}
+          git push origin ${{ env.TAG }}
+
       - name: Package with jpackage
         run: .\gradlew.bat jpackage
 
