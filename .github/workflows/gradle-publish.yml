@@ -26,24 +26,19 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Get version from Gradle
-        id: get_version
-        run: |
-          $version = .\gradlew.bat properties | Select-String -Pattern 'version:' | ForEach-Object { $_ -replace 'version: ', '' }
-          Write-Host "Extracted version: $version"
-          echo "VERSION=$version" >> $GITHUB_ENV
-          echo "TAG=v$version" >> $GITHUB_ENV
-          Write-Host "TAG is set to: ${{ env.TAG }}"
-
-      - name: Create Git Tag
-        if: env.TAG != ''
+      - name: Get version and create Git Tag
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
+          $version = .\gradlew.bat properties | Select-String -Pattern 'version:' | ForEach-Object { $_ -replace 'version: ', '' }
+          Write-Host "Extracted version: $version"
+          $tag = "v$version"
+          Write-Host "TAG is set to: $tag"
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ env.TAG }}
-          git push https://${{ secrets.TOKEN }}@github.com/${{ github.repository }} ${{ env.TAG }}
+          git tag $tag
+          git push https://${{ secrets.TOKEN }}@github.com/${{ github.repository }} $tag
 
       - name: Package with jpackage
         run: .\gradlew.bat jpackage
@@ -52,8 +47,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.TAG }}
-          name: "Release ${{ env.VERSION }}"
+          tag_name: $tag
+          name: "Release $version"
           draft: false
           prerelease: false
         env:
@@ -62,7 +57,7 @@ jobs:
       - name: Upload installer files
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.TAG }}
+          tag_name: $tag
           files: |
             build/installer/M5Client-*.exe
             build/installer/M5Client-*.msi
