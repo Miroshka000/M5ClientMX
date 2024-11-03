@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="600.0" prefWidth="800.0" stylesheets="@../styles/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="miroshka.controller.UIController">
+    <Label fx:id="appTitleLabel" layoutX="20.0" layoutY="10.0" style="-fx-font-size: 16px; -fx-text-fill: white;" />
+    <TabPane layoutX="20.0" layoutY="70.0" prefHeight="500.0" prefWidth="760.0">
+        <Tab closable="false" text="Основные функции">
+            <AnchorPane>
+                <ImageView fx:id="decorativeImageView1" fitHeight="300.0" fitWidth="300.0" layoutX="230.0" layoutY="14.0" />
+                <ImageView fx:id="decorativeImageView2" fitHeight="50.0" fitWidth="150.0" layoutX="486.0" layoutY="139.0" />
+
+                <Button fx:id="installButton" layoutX="230.0" layoutY="407.0" onAction="#onInstallButtonClick" prefHeight="30.0" prefWidth="80.0" text="Install" />
+
+                <ComboBox fx:id="firmwareMenu" layoutX="591.0" layoutY="345.0" onAction="#onFirmwareMenuChange" />
+
+                <Button fx:id="driversButton" layoutX="360.0" layoutY="407.0" onAction="#onDriversButtonClick" prefHeight="30.0" prefWidth="80.0" text="Drivers" />
+
+                <Label layoutX="435.0" layoutY="311.0" text="Device:" />
+                <ComboBox fx:id="deviceMenu" layoutX="425.0" layoutY="345.0" onAction="#onDeviceMenuChange" />
+
+                <Label layoutX="243.0" layoutY="311.0" text="COM Port:" />
+                <ComboBox fx:id="comPortMenu" layoutX="230.0" layoutY="345.0" />
+
+                <ImageView fx:id="firmwareImageView" fitHeight="114.0" fitWidth="200.0" layoutY="6.0" preserveRatio="true" />
+
+                <TextArea fx:id="consoleOutput" editable="false" layoutY="106.0" prefHeight="351.0" prefWidth="200.0" />
+                <Label layoutX="592.0" layoutY="311.0" text="Firmware:" />
+
+                <ProgressBar fx:id="progressBar" layoutX="224.0" layoutY="287.0" prefWidth="300.0" visible="false" />
+            </AnchorPane>
+        </Tab>
+
+        <Tab closable="false" text="Настройки">
+            <AnchorPane>
+                <Label layoutX="100.0" layoutY="50.0" text="Beta section" textFill="WHITE" />
+                <CheckBox layoutX="150.0" layoutY="100.0" text="Автоматическое обновление" textFill="WHITE" />
+                <CheckBox layoutX="150.0" layoutY="150.0" text="Уведомления" textFill="WHITE" />
+                <Button layoutX="150.0" layoutY="250.0" text="Сохранить настройки" />
+
+                <Label layoutX="487.0" layoutY="117.0" text="Выберите язык:" textFill="WHITE" />
+                <!-- <ComboBox fx:id="languageMenu" layoutX="509.0" layoutY="167.0" onAction="#onLanguageChange" /> -->
+            </AnchorPane>
+        </Tab>
+    </TabPane>
+
+    <HBox layoutX="700.0" layoutY="10.0" spacing="10" />
+    <Button fx:id="closeButton" layoutX="748.0" layoutY="12.0" onAction="#closeWindow" prefHeight="25.0" prefWidth="24.0" />
+    <Button fx:id="minimizeButton" layoutX="709.0" layoutY="12.0" onAction="#minimizeWindow" prefHeight="25.0" prefWidth="24.0" />
+
+    <Hyperlink fx:id="copyrightLink" layoutX="630.0" layoutY="570.0" onAction="#openGithubLink" style="-fx-text-fill: #ff2600;" text="© 2024 by Miroshka" />
+</AnchorPane>

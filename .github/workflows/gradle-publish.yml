@@ -1,0 +1,60 @@
+name: Gradle Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GraalVM 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          server-id: github
+          settings-path: ${{ github.workspace }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Get version from build.gradle.kts
+        id: get_version
+        run: |
+          $versionLine = Select-String -Path build.gradle.kts -Pattern 'version ='
+          $version = $versionLine -replace '.*version = "(.*)".*', '$1'
+          Write-Host "Extracted version: $version"
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "TAG=v$version" >> $GITHUB_ENV
+
+      - name: Package with jpackage
+        run: .\gradlew.bat jpackage
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG }}
+          name: "Release ${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Upload installer files
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG }}
+          files: |
+            build\installer\M5Client-*.exe
+            build\installer\M5Client-*.msi
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
