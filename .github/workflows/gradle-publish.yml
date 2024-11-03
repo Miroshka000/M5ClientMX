@@ -26,14 +26,18 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Display build.gradle.kts
+        run: cat build.gradle.kts
+
       - name: Get version and create Git Tag
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
+        id: get_version
         run: |
           $version = .\gradlew.bat properties | Select-String -Pattern 'version:' | ForEach-Object { $_ -replace 'version: ', '' }
-          Write-Host "Extracted version: $version"
+          echo "Extracted version: $version"
           $tag = "v$version"
-          Write-Host "TAG is set to: $tag"
+          echo "TAG is set to: $tag"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=version::$version"
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -47,8 +51,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.create_release.outputs.tag }}
-          name: "Release $version"
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: "Release ${{ steps.get_version.outputs.version }}"
           draft: false
           prerelease: false
         env:
@@ -57,7 +61,7 @@ jobs:
       - name: Upload installer files
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: $tag
+          tag_name: ${{ steps.get_version.outputs.tag }}
           files: |
             build/installer/M5Client-*.exe
         env:
