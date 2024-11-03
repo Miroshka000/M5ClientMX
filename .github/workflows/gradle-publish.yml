@@ -26,6 +26,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Display build.gradle.kts
+        run: cat build.gradle.kts
+
       - name: Get version from build.gradle.kts
         id: get_version
         run: |
