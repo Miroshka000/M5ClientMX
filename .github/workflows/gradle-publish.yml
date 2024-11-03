@@ -34,8 +34,10 @@ jobs:
           Write-Host "Extracted version: $version"
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "TAG=v$version" >> $GITHUB_ENV
+          Write-Host "TAG is set to: ${{ env.TAG }}"
 
       - name: Create Git Tag
+        if: env.TAG != ''
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
