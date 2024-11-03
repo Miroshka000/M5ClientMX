@@ -26,9 +26,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Display build.gradle.kts
-        run: cat build.gradle.kts
-
       - name: Get version and create Git Tag
         env:
           TOKEN: ${{ secrets.TOKEN }}
@@ -50,7 +47,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: $tag
+          tag_name: ${{ steps.create_release.outputs.tag }}
           name: "Release $version"
           draft: false
           prerelease: false
@@ -63,6 +60,5 @@ jobs:
           tag_name: $tag
           files: |
             build/installer/M5Client-*.exe
-            build/installer/M5Client-*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
