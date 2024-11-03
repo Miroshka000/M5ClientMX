@@ -50,5 +50,5 @@
     <Button fx:id="closeButton" layoutX="748.0" layoutY="12.0" onAction="#closeWindow" prefHeight="25.0" prefWidth="24.0" />
     <Button fx:id="minimizeButton" layoutX="709.0" layoutY="12.0" onAction="#minimizeWindow" prefHeight="25.0" prefWidth="24.0" />
 
-    <Hyperlink fx:id="copyrightLink" layoutX="630.0" layoutY="570.0" onAction="#openGithubLink" style="-fx-text-fill: #ff2600;" text="© 2024 by Miroshka" />
+    <Hyperlink fx:id="copyrightLink" layoutX="630.0" layoutY="570.0" onAction="#openGithubLink" style="-fx-text-fill: #ff2600;" text="GitHub" />
 </AnchorPane>

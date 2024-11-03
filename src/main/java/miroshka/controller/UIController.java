@@ -91,7 +91,7 @@ public class UIController {
     @FXML
     private void openGithubLink() {
         try {
-            URI githubUri = new URI("https://github.com/Miroshka000/M5ClientMX.git");
+            URI githubUri = new URI("https://github.com/Miroshka000/M5ClientMX");
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(githubUri);
             }
