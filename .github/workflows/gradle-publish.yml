@@ -26,9 +26,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Display build.gradle.kts
+        run: cat build.gradle.kts
+
       - name: Get version and create Git Tag
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           $version = .\gradlew.bat properties | Select-String -Pattern 'version:' | ForEach-Object { $_ -replace 'version: ', '' }
           Write-Host "Extracted version: $version"
@@ -38,7 +41,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag $tag
-          git push https://${{ secrets.TOKEN }}@github.com/${{ github.repository }} $tag
+          git push https://x-access-token:${{ secrets.TOKEN }}@github.com/${{ github.repository }} $tag
 
       - name: Package with jpackage
         run: .\gradlew.bat jpackage
