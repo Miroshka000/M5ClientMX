@@ -26,11 +26,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Get version from build.gradle.kts
+      - name: Get version from Gradle
         id: get_version
         run: |
-          $versionLine = Select-String -Path build.gradle.kts -Pattern 'version ='
-          $version = $versionLine -replace '.*version = "(.*)".*', '$1'
+          $version = .\gradlew.bat properties | Select-String -Pattern 'version:' | ForEach-Object { $_ -replace 'version: ', '' }
           Write-Host "Extracted version: $version"
           echo "VERSION=$version" >> $GITHUB_ENV
           echo "TAG=v$version" >> $GITHUB_ENV
