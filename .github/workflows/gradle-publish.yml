@@ -36,11 +36,13 @@ jobs:
           echo "TAG=v$version" >> $GITHUB_ENV
 
       - name: Create Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git tag ${{ env.TAG }}
-          git push origin ${{ env.TAG }}
+          git push https://${{ secrets.TOKEN }}@github.com/${{ github.repository }} ${{ env.TAG }}
 
       - name: Package with jpackage
         run: .\gradlew.bat jpackage
@@ -54,14 +56,14 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GTOKEN }}
 
       - name: Upload installer files
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.TAG }}
           files: |
-            build\installer\M5Client-*.exe
-            build\installer\M5Client-*.msi
+            build/installer/M5Client-*.exe
+            build/installer/M5Client-*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
