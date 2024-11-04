@@ -134,6 +134,9 @@ public enum Firmware {
             throw new RuntimeException(langManager.getTranslation("failed_to_fetch_latest_firmware") + ": " + e.getMessage(), e);
         }
     }
+    public String getButtonColor() {
+        return buttonColor;
+    }
 
     public Firmware next() {
         return values()[(ordinal() + 1) % values().length];

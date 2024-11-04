@@ -293,6 +293,7 @@ public class UIController {
 
     private void updateFirmwareUI() {
         firmwareImageView.setImage(new Image(getClass().getResourceAsStream(currentFirmware.getImagePath())));
+        updateButtonColors();
     }
 
     private void showCustomAlert(String title, String message, CustomAlert.AlertType alertType) {
@@ -322,5 +323,13 @@ public class UIController {
     private void closeWindow() {
         Stage stage = (Stage) closeButton.getScene().getWindow();
         stage.close();
+    }
+    private void updateButtonColors() {
+        String color = currentFirmware.getButtonColor();
+        installButton.setStyle("-fx-background-color: " + color);
+        comPortMenu.setStyle("-fx-background-color: " + color);
+        deviceMenu.setStyle("-fx-background-color: " + color);
+        driversButton.setStyle("-fx-background-color: " + color);
+        firmwareMenu.setStyle("-fx-background-color: " + color);
     }
 }

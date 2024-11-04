@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import miroshka.controller.UIController;
-import miroshka.lang.LangManager; // Импортируйте LangManager
+import miroshka.lang.LangManager;
 
 import java.util.Locale;
 
