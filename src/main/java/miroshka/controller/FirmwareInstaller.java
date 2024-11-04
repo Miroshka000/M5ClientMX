@@ -3,6 +3,7 @@ package miroshka.controller;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.ProgressBar;
+import miroshka.lang.LangManager;
 import miroshka.view.CustomAlert;
 
 import java.io.BufferedReader;
@@ -16,8 +17,8 @@ public class FirmwareInstaller {
 
     private static final Pattern PROGRESS_PATTERN = Pattern.compile("\\((\\d+)%\\)");
 
-    public static void flashFirmware(File firmwareFile, String comPort, ProgressBar progressBar) throws IOException, InterruptedException {
-        System.out.println("Preparing to install firmware...");
+    public static void flashFirmware(File firmwareFile, String comPort, ProgressBar progressBar, LangManager langManager) throws IOException, InterruptedException {
+        System.out.println(langManager.getTranslation("preparing_install_firmware"));
         String esptoolPath = new File("esptool/esptool-win64/esptool.exe").getAbsolutePath();
 
         ProcessBuilder pb = new ProcessBuilder(esptoolPath, "--port", comPort, "--baud", "1500000", "write_flash", "0x00000", firmwareFile.getAbsolutePath());
@@ -42,11 +43,15 @@ public class FirmwareInstaller {
 
                 int exitCode = process.waitFor();
                 if (exitCode != 0) {
-                    Platform.runLater(() -> new CustomAlert("Error", "Firmware installation failed.", CustomAlert.AlertType.ERROR).showAndWait());
+                    Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                            langManager.getTranslation("firmware_installation_failed"),
+                            CustomAlert.AlertType.ERROR).showAndWait());
                 } else {
                     Platform.runLater(() -> {
-                        System.out.println("Firmware installed successfully.");
-                        new CustomAlert("Success", "Firmware installed successfully.", CustomAlert.AlertType.INFORMATION).showAndWait();
+                        System.out.println(langManager.getTranslation("firmware_installed_successfully"));
+                        new CustomAlert(langManager.getTranslation("success"),
+                                langManager.getTranslation("firmware_installed_successfully"),
+                                CustomAlert.AlertType.INFORMATION).showAndWait();
                     });
                 }
                 return null;

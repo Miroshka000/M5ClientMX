@@ -1,6 +1,7 @@
 package miroshka.model;
 
 import javafx.application.Platform;
+import miroshka.lang.LangManager;
 import miroshka.view.CustomAlert;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,7 +12,10 @@ import java.net.URI;
 import java.util.Scanner;
 
 public enum Firmware {
-    CATHACK("CatHack", "/miroshka/images/cathack.png", "#ff8e19", "DYNAMIC", "DYNAMIC", "DYNAMIC"),
+    CATHACK("CatHack", "/miroshka/images/cathack.png", "#ff8e19",
+            "https://github.com/Stachugit/CatHack/releases/download/CatHackv1.3_IRfix/CatHack_v1.3.bin",
+            "UNAVAILABLE",
+            "UNAVAILABLE"),
     BRUCE("Bruce", "/miroshka/images/bruce.png", "#a82da4", "DYNAMIC", "DYNAMIC", "DYNAMIC"),
     NEMO("Nemo", "/miroshka/images/nemo.png", "#7d9f71",
             "https://github.com/n0xa/m5stick-nemo/releases/download/v2.7.0/M5Nemo-v2.7.0-M5StickCPlus2.bin",
@@ -30,6 +34,8 @@ public enum Firmware {
             "https://github.com/m5stack/M5Cardputer-UserDemo/releases/download/V0.9/K132-Cardputer-UserDemo-V0.9_0x0.bin",
             "UNAVAILABLE");
 
+    private static LangManager langManager;
+
     private final String displayName;
     private final String imagePath;
     private final String buttonColor;
@@ -45,17 +51,19 @@ public enum Firmware {
         this.cardUrl = cardUrl;
         this.plus1Url = plus1Url;
     }
+
+    public static void setLangManager(LangManager manager) {
+        langManager = manager;
+    }
+
     public String getImagePath() {
         return imagePath;
     }
 
-    public String getButtonColor() {
-        return buttonColor;
-    }
-
     public String getDownloadUrl(String device) {
+        if (langManager == null) throw new IllegalStateException("LangManager is not set.");
         if (this == USERDEMO && device.equals("Plus1")) {
-            throw new IllegalArgumentException("UserDemo firmware is not available for Plus1.");
+            throw new IllegalArgumentException(langManager.getTranslation("userdemo_unavailable_plus1"));
         }
         switch (device) {
             case "Plus2":
@@ -65,7 +73,7 @@ public enum Firmware {
             case "Plus1":
                 return resolveUrl(plus1Url, device);
             default:
-                throw new IllegalArgumentException("Unknown device: " + device);
+                throw new IllegalArgumentException(langManager.getTranslation("unknown_device") + device);
         }
     }
 
@@ -74,7 +82,7 @@ public enum Firmware {
             return fetchLatestReleaseUrl(device);
         }
         if ("UNAVAILABLE".equals(url)) {
-            throw new IllegalArgumentException("Firmware is not available for the selected device.");
+            throw new IllegalArgumentException(langManager.getTranslation("firmware_unavailable"));
         }
         return url;
     }
@@ -91,12 +99,14 @@ public enum Firmware {
             if (conn.getResponseCode() != 200) {
                 Platform.runLater(() -> {
                     try {
-                        new CustomAlert("Error", "Failed to fetch latest release: HTTP error code " + conn.getResponseCode(), CustomAlert.AlertType.ERROR).showAndWait();
+                        new CustomAlert(langManager.getTranslation("error"),
+                                langManager.getTranslation("failed_to_fetch_latest_release") + " HTTP error code " + conn.getResponseCode(),
+                                CustomAlert.AlertType.ERROR).showAndWait();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 });
-                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+                throw new RuntimeException(langManager.getTranslation("failed_fetch") + conn.getResponseCode());
             }
 
             Scanner scanner = new Scanner(conn.getInputStream());
@@ -116,10 +126,12 @@ public enum Firmware {
                     return asset.getString("browser_download_url");
                 }
             }
-            throw new RuntimeException("The firmware for the device was not found.");
+            throw new RuntimeException(langManager.getTranslation("firmware_not_found"));
         } catch (IOException e) {
-            Platform.runLater(() -> new CustomAlert("Error", "Failed to fetch the latest firmware URL: " + e.getMessage(), CustomAlert.AlertType.ERROR).showAndWait());
-            throw new RuntimeException("Failed to fetch the latest firmware URL: " + e.getMessage(), e);
+            Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                    langManager.getTranslation("failed_to_fetch_latest_firmware") + ": " + e.getMessage(),
+                    CustomAlert.AlertType.ERROR).showAndWait());
+            throw new RuntimeException(langManager.getTranslation("failed_to_fetch_latest_firmware") + ": " + e.getMessage(), e);
         }
     }
 

@@ -1,6 +1,7 @@
 package miroshka.installer;
 
 import javafx.application.Platform;
+import miroshka.lang.LangManager;
 import miroshka.model.FileDownloader;
 import miroshka.model.ProgressCallback;
 import miroshka.view.CustomAlert;
@@ -22,32 +23,39 @@ public class DependencyInstaller {
     private static final File DRIVER_CH341 = new File(CURRENT_DIR, "CH341SER.EXE");
     private static final File DRIVER_CH9102 = new File(CURRENT_DIR, "CH9102.exe");
 
-    public static void installDependencies(ProgressCallback progressCallback) throws IOException {
+    public static void installDependencies(ProgressCallback progressCallback, LangManager langManager) throws IOException {
         try {
-            ensureEsptoolInstalled(progressCallback);
+            ensureEsptoolInstalled(progressCallback, langManager);
         } catch (IOException e) {
-            Platform.runLater(() -> new CustomAlert("Error", "Dependency installation failed: " + e.getMessage(), CustomAlert.AlertType.ERROR).showAndWait());
+            Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                    langManager.getTranslation("dependency_installation_failed") + ": " + e.getMessage(),
+                    CustomAlert.AlertType.ERROR).showAndWait());
             throw e;
         }
     }
 
-    private static void ensureEsptoolInstalled(ProgressCallback progressCallback) throws IOException {
+    private static void ensureEsptoolInstalled(ProgressCallback progressCallback, LangManager langManager) throws IOException {
         if (!ESPTOOL_EXECUTABLE.exists()) {
-            System.out.println("Esptool executable not found. Starting installation...");
+            System.out.println(langManager.getTranslation("esptool_not_found"));
+            Platform.runLater(() -> new CustomAlert(langManager.getTranslation("info"),
+                    langManager.getTranslation("esptool_not_found_installing"),
+                    CustomAlert.AlertType.INFORMATION).showAndWait());
 
             if (!CURRENT_DIR.exists()) {
                 CURRENT_DIR.mkdirs();
             }
 
-            System.out.println("Downloading esptool...");
+            System.out.println(langManager.getTranslation("downloading_esptool"));
             FileDownloader.downloadFileWithProgress(ESPTOOL_URL, ESPTOOL_ZIP, progressCallback);
 
             if (!ESPTOOL_ZIP.exists() || ESPTOOL_ZIP.length() == 0) {
-                Platform.runLater(() -> new CustomAlert("Error", "Failed to download esptool.zip. Please check your internet connection or the download URL.", CustomAlert.AlertType.ERROR).showAndWait());
-                throw new FileNotFoundException("Failed to download esptool.zip.");
+                Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                        langManager.getTranslation("failed_to_download_esptool_zip"),
+                        CustomAlert.AlertType.ERROR).showAndWait());
+                throw new FileNotFoundException(langManager.getTranslation("failed_to_download_esptool_zip"));
             }
 
-            System.out.println("Unzipping esptool...");
+            System.out.println(langManager.getTranslation("unzipping_esptool"));
             unzipEsptool(ESPTOOL_ZIP, ESPTOOL_DIR);
 
             if (ESPTOOL_ZIP.exists()) {
@@ -55,17 +63,19 @@ public class DependencyInstaller {
             }
 
             if (!ESPTOOL_EXECUTABLE.exists()) {
-                Platform.runLater(() -> new CustomAlert("Error", "esptool.exe not found in " + ESPTOOL_DIR.getAbsolutePath(), CustomAlert.AlertType.ERROR).showAndWait());
-                throw new FileNotFoundException("esptool.exe not found.");
+                Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                        langManager.getTranslation("esptool_not_found_in_directory") + " " + ESPTOOL_DIR.getAbsolutePath(),
+                        CustomAlert.AlertType.ERROR).showAndWait());
+                throw new FileNotFoundException(langManager.getTranslation("esptool_not_found"));
             }
 
-            System.out.println("Esptool installed successfully.");
+            System.out.println(langManager.getTranslation("esptool_installation_successful"));
         } else {
-            System.out.println("Esptool is already installed.");
+            System.out.println(langManager.getTranslation("esptool_already_installed"));
         }
     }
 
-    public static void installDriver(String driverType) throws IOException {
+    public static void installDriver(String driverType, LangManager langManager) throws IOException {
         try {
             File driverFile;
             switch (driverType) {
@@ -79,17 +89,21 @@ public class DependencyInstaller {
                     driverFile = DRIVER_CH9102;
                     break;
                 default:
-                    Platform.runLater(() -> new CustomAlert("Error", "Unknown driver type: " + driverType, CustomAlert.AlertType.ERROR).showAndWait());
-                    throw new IllegalArgumentException("Unknown driver type: " + driverType);
+                    Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                            langManager.getTranslation("unknown_driver_type") + ": " + driverType,
+                            CustomAlert.AlertType.ERROR).showAndWait());
+                    throw new IllegalArgumentException(langManager.getTranslation("unknown_driver_type") + ": " + driverType);
             }
-            ensureDriverInstalled(driverFile, driverFile.getName());
+            ensureDriverInstalled(driverFile, driverFile.getName(), langManager);
         } catch (IOException e) {
-            Platform.runLater(() -> new CustomAlert("Error", "Driver installation failed: " + e.getMessage(), CustomAlert.AlertType.ERROR).showAndWait());
+            Platform.runLater(() -> new CustomAlert(langManager.getTranslation("error"),
+                    langManager.getTranslation("driver_installation_failed") + ": " + e.getMessage(),
+                    CustomAlert.AlertType.ERROR).showAndWait());
             throw e;
         }
     }
 
-    private static void ensureDriverInstalled(File driverFile, String driverName) throws IOException {
+    private static void ensureDriverInstalled(File driverFile, String driverName, LangManager langManager) throws IOException {
         if (!driverFile.exists()) {
             String driverUrl = DRIVER_BASE_URL + driverName;
             FileDownloader.downloadFileWithProgress(driverUrl, driverFile, null);

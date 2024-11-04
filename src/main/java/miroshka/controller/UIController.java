@@ -10,23 +10,23 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import miroshka.lang.LangManager;
 import miroshka.model.Firmware;
-import miroshka.model.FileDownloader;
+import miroshka.model.ProgressCallback;
 import miroshka.model.SerialPortUtils;
 import miroshka.installer.DependencyInstaller;
 import miroshka.view.CustomAlert;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 
 public class UIController {
     @FXML
-    private Button installButton, driversButton, minimizeButton, closeButton;
+    private Button installButton, driversButton, minimizeButton, closeButton, saveSettingsButton;
     @FXML
     private ComboBox<String> deviceMenu, comPortMenu;
     @FXML
@@ -38,14 +38,32 @@ public class UIController {
     @FXML
     private ProgressBar progressBar;
     @FXML
-    private Label appTitleLabel;
+    private Label appTitleLabel, deviceLabel, portLabel, firmwareLabel, betaSectionLabel, languageLabel;
+    @FXML
+    private CheckBox autoUpdateCheckBox, notificationsCheckBox;
+    @FXML
+    private ComboBox<String> languageMenu;
+    @FXML
+    private Tab mainTab, settingsTab;
+    @FXML
+    private Hyperlink copyrightLink;
 
     private Firmware currentFirmware = Firmware.CATHACK;
+    private LangManager langManager;
 
     @FXML
     public void initialize() {
+        langManager = new LangManager();
+        Firmware.setLangManager(langManager);
+
+        setAppTitle();
+        initializeLanguageMenu();
+        langManager.setLocale(new Locale("ru"));
+        setLocalizedTexts();
+
         deviceMenu.getItems().addAll("Plus2", "Card", "Plus1");
         deviceMenu.getSelectionModel().select("Plus2");
+        deviceMenu.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> onDeviceMenuChange());
 
         List<String> ports = SerialPortUtils.getAvailablePorts();
         comPortMenu.getItems().addAll(ports);
@@ -61,32 +79,92 @@ public class UIController {
 
         redirectSystemOutputToConsole();
         updateFirmwareUI();
-        setAppTitle();
+
+        ProgressCallback progressCallback = (bytesRead, totalBytes) -> Platform.runLater(() -> {
+            double progress = totalBytes > 0 ? (double) bytesRead / totalBytes : 0;
+            progressBar.setProgress(progress);
+        });
 
         Task<Void> installEsptoolTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
                 progressBar.setVisible(true);
                 progressBar.setProgress(0);
-                DependencyInstaller.installDependencies(this::updateProgress);
-                Platform.runLater(() -> {
-                    showCustomAlert("Success", "esptool installed successfully.", CustomAlert.AlertType.INFORMATION);
+                try {
+                    DependencyInstaller.installDependencies(progressCallback, langManager);
+                    Platform.runLater(() -> showCustomAlert(langManager.getTranslation("success"),
+                            langManager.getTranslation("esptool_installed_successfully"),
+                            CustomAlert.AlertType.INFORMATION));
+                } catch (IOException e) {
+                    Platform.runLater(() -> showCustomAlert(langManager.getTranslation("error"),
+                            langManager.getTranslation("dependency_installation_failed") + ": " + e.getMessage(),
+                            CustomAlert.AlertType.ERROR));
+                } finally {
                     progressBar.setVisible(false);
-                });
+                }
                 return null;
             }
         };
-
         new Thread(installEsptoolTask).start();
+
         installEsptoolTask.setOnFailed(e -> Platform.runLater(() -> {
-            showCustomAlert("Error", "esptool installation failed: " + installEsptoolTask.getException().getMessage(), CustomAlert.AlertType.ERROR);
+            showCustomAlert(langManager.getTranslation("error"),
+                    langManager.getTranslation("esptool_installation_failed") + ": " + installEsptoolTask.getException().getMessage(),
+                    CustomAlert.AlertType.ERROR);
             progressBar.setVisible(false);
         }));
-
-        deviceMenu.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            onDeviceMenuChange();
-        });
     }
+
+    private void initializeLanguageMenu() {
+        languageMenu.getItems().addAll("Русский", "English");
+        languageMenu.getSelectionModel().select("Русский");
+        languageMenu.setOnAction(event -> onLanguageChange());
+    }
+
+    @FXML
+    private void onLanguageChange() {
+        String selectedLanguage = languageMenu.getValue();
+        Locale locale;
+
+        if ("Русский".equals(selectedLanguage)) {
+            locale = new Locale("ru");
+        } else {
+            locale = new Locale("en");
+        }
+
+        langManager.setLocale(locale);
+        setLocalizedTexts();
+    }
+
+    public void setLangManager(LangManager langManager) {
+        this.langManager = langManager;
+    }
+
+    private void setLocalizedTexts() {
+        installButton.setText(langManager.getTranslation("install_button"));
+        driversButton.setText(langManager.getTranslation("drivers_button"));
+        saveSettingsButton.setText(langManager.getTranslation("save_settings_button"));
+
+        deviceLabel.setText(langManager.getTranslation("device_label"));
+        portLabel.setText(langManager.getTranslation("port_label"));
+        firmwareLabel.setText(langManager.getTranslation("firmware_label"));
+        betaSectionLabel.setText(langManager.getTranslation("beta_section"));
+        languageLabel.setText(langManager.getTranslation("language_label"));
+
+        mainTab.setText(langManager.getTranslation("main_tab"));
+        settingsTab.setText(langManager.getTranslation("settings_tab"));
+
+        autoUpdateCheckBox.setText(langManager.getTranslation("auto_update"));
+        notificationsCheckBox.setText(langManager.getTranslation("notifications"));
+
+        languageMenu.setPromptText(langManager.getTranslation("language_prompt"));
+        deviceMenu.setPromptText(langManager.getTranslation("device_selection_prompt"));
+        comPortMenu.setPromptText(langManager.getTranslation("port_selection_prompt"));
+        firmwareMenu.setPromptText(langManager.getTranslation("firmware_selection_prompt"));
+
+        copyrightLink.setText(langManager.getTranslation("github_link"));
+    }
+
 
     @FXML
     private void openGithubLink() {
@@ -155,20 +233,20 @@ public class UIController {
                 try {
                     String firmwareUrl = currentFirmware.getDownloadUrl(selectedDevice);
                     File firmwareFile = new File(System.getProperty("user.home"), "latest_firmware.bin");
-                    FileDownloader.downloadFileWithProgress(firmwareUrl, firmwareFile, (bytesRead, totalBytes) -> {
-                        double progress = totalBytes > 0 ? (double) bytesRead / totalBytes : 0;
-                        updateProgress(progress, 1.0);
-                    });
-                    FirmwareInstaller.flashFirmware(firmwareFile, comPort, progressBar);
+                    FirmwareInstaller.flashFirmware(firmwareFile, comPort, progressBar, langManager);
                 } catch (IOException | InterruptedException e) {
-                    Platform.runLater(() -> new CustomAlert("Error", "Firmware installation failed: " + e.getMessage(), CustomAlert.AlertType.ERROR).showAndWait());
+                    Platform.runLater(() -> showCustomAlert(langManager.getTranslation("error"),
+                            langManager.getTranslation("firmware_installation_failed") + ": " + e.getMessage(),
+                            CustomAlert.AlertType.ERROR));
                 }
                 return null;
             }
         };
 
         firmwareInstallTask.setOnFailed(e -> Platform.runLater(() -> {
-            showCustomAlert("Error", "Firmware installation failed.", CustomAlert.AlertType.ERROR);
+            showCustomAlert(langManager.getTranslation("error"),
+                    langManager.getTranslation("firmware_installation_failed"),
+                    CustomAlert.AlertType.ERROR);
             progressBar.setVisible(false);
         }));
 
@@ -188,37 +266,33 @@ public class UIController {
             try {
                 switch (selectedDevice) {
                     case "Card":
-                        DependencyInstaller.installDriver("CH341");
+                        DependencyInstaller.installDriver("CH341", langManager);
                         break;
                     case "Plus1":
-                        DependencyInstaller.installDriver("CDM");
+                        DependencyInstaller.installDriver("CH341", langManager);
                         break;
                     case "Plus2":
-                        DependencyInstaller.installDriver("CH9102");
+                        DependencyInstaller.installDriver("CH341", langManager);
                         break;
                     default:
-                        Platform.runLater(() -> showCustomAlert("Error", "Unknown device selected.", CustomAlert.AlertType.ERROR));
+                        Platform.runLater(() -> showCustomAlert(langManager.getTranslation("error"),
+                                langManager.getTranslation("unknown_device_selected"),
+                                CustomAlert.AlertType.ERROR));
                         return;
                 }
-                Platform.runLater(() -> showCustomAlert("Success", "Driver installed successfully.", CustomAlert.AlertType.INFORMATION));
+                Platform.runLater(() -> showCustomAlert(langManager.getTranslation("success"),
+                        langManager.getTranslation("driver_installed_successfully"),
+                        CustomAlert.AlertType.INFORMATION));
             } catch (IOException e) {
-                Platform.runLater(() -> showCustomAlert("Error", "Driver installation failed: " + e.getMessage(), CustomAlert.AlertType.ERROR));
+                Platform.runLater(() -> showCustomAlert(langManager.getTranslation("error"),
+                        langManager.getTranslation("driver_installation_failed") + ": " + e.getMessage(),
+                        CustomAlert.AlertType.ERROR));
             }
         }).start();
     }
 
     private void updateFirmwareUI() {
         firmwareImageView.setImage(new Image(getClass().getResourceAsStream(currentFirmware.getImagePath())));
-        updateButtonColors();
-    }
-
-    private void updateButtonColors() {
-        String color = currentFirmware.getButtonColor();
-        installButton.setStyle("-fx-background-color: " + color);
-        comPortMenu.setStyle("-fx-background-color: " + color);
-        deviceMenu.setStyle("-fx-background-color: " + color);
-        driversButton.setStyle("-fx-background-color: " + color);
-        firmwareMenu.setStyle("-fx-background-color: " + color);
     }
 
     private void showCustomAlert(String title, String message, CustomAlert.AlertType alertType) {
@@ -232,7 +306,8 @@ public class UIController {
             public void write(int b) throws IOException {
                 Platform.runLater(() -> consoleOutput.appendText(String.valueOf((char) b)));
             }
-        });
+        }, true, StandardCharsets.UTF_8);
+
         System.setOut(consoleStream);
         System.setErr(consoleStream);
     }
