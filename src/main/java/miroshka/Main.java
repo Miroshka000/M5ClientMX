@@ -54,7 +54,6 @@ public class Main extends Application {
         Platform.exit();
     }
 
-
     private void initializeApp() {
         configManager = new ConfigManager();
         String savedLanguage = configManager.getConfigValue("language", "ru");

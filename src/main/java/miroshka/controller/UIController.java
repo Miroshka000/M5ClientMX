@@ -166,10 +166,14 @@ public class UIController {
 
     private void startLoggingToFile() {
         try {
-            File jarFile = new File(ConfigManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            String executableDir = jarFile.getParent();
+            String executableDir = System.getProperty("user.dir");
 
-            File logFile = new File(executableDir, "log.txt");
+            File logFile = new File(executableDir + File.separator + "logs" + File.separator + "log.txt");
+
+            File parentDir = logFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
 
             fileStream = new PrintStream(new FileOutputStream(logFile, true), true, StandardCharsets.UTF_8);
 
@@ -179,11 +183,8 @@ public class UIController {
             System.out.println("Dev Mode enabled: Logs will be saved to " + logFile.getPath());
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
     }
-
 
     private void stopLoggingToFile() {
         if (fileStream != null) {

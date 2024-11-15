@@ -8,13 +8,7 @@ public class ConfigManager {
     private static final String CONFIG_FILE_PATH;
 
     static {
-        File jarFile = null;
-        try {
-            jarFile = new File(ConfigManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        String executableDir = jarFile.getParent();
+        String executableDir = System.getProperty("user.dir");
         CONFIG_FILE_PATH = executableDir + File.separator + "miroshka_config.properties";
     }
 
@@ -44,6 +38,7 @@ public class ConfigManager {
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -65,9 +60,10 @@ public class ConfigManager {
             }
 
             try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8)) {
-                properties.store(writer, "Конфигурация");
+                properties.store(writer, "Config");
             }
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -32,8 +32,7 @@ tasks.named<JavaExec>("run") {
     jvmArgs = listOf(
         "--module-path", configurations.runtimeClasspath.get().joinToString(";"),
         "--add-modules", "javafx.controls,javafx.fxml,jdk.crypto.cryptoki",
-        "-Dapp.version=${project.version}",
-        "-Dfile.encoding=UTF-8"
+        "-Dapp.version=${project.version}"
     )
 }
 
@@ -55,8 +54,7 @@ jlink {
         jvmArgs = listOf(
             "--add-modules", "javafx.controls,javafx.fxml",
             "--module-path", configurations.runtimeClasspath.get().asPath,
-            "-Dapp.version=${project.version}",
-            "-Dfile.encoding=UTF-8"
+            "-Dapp.version=${project.version}"
         )
     }
 
