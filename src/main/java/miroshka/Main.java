@@ -1,23 +1,29 @@
 package miroshka;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import miroshka.config.ConfigManager;
 import miroshka.controller.UIController;
 import miroshka.lang.LangManager;
+import miroshka.model.SerialPortUtils;
 
 import java.util.Locale;
 
+
 public class Main extends Application {
+
+    private ConfigManager configManager;
+
     @Override
     public void start(Stage primaryStage) {
         try {
-            Locale.setDefault(new Locale("ru"));
-            LangManager langManager = new LangManager();
+            initializeApp();
 
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/miroshka/view/MainUI.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 800, 600);
@@ -29,12 +35,31 @@ public class Main extends Application {
             primaryStage.setScene(scene);
 
             UIController controller = fxmlLoader.getController();
-            controller.setLangManager(langManager);
+            controller.setLangManager(new LangManager());
+            controller.setConfigManager(configManager);
+
+            primaryStage.setOnCloseRequest(event -> onWindowClose());
 
             primaryStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void onWindowClose() {
+        SerialPortUtils.stopMonitoringPorts();
+        if (configManager != null) {
+            configManager.saveConfig();
+        }
+        Platform.exit();
+    }
+
+
+    private void initializeApp() {
+        configManager = new ConfigManager();
+        String savedLanguage = configManager.getConfigValue("language", "ru");
+        Locale.setDefault(new Locale(savedLanguage));
+        SerialPortUtils.startMonitoringPorts();
     }
 
     public static void main(String[] args) {

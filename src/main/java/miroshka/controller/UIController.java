@@ -10,6 +10,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import miroshka.config.ConfigManager;
+import miroshka.installer.FirmwareInstaller;
 import miroshka.lang.LangManager;
 import miroshka.model.Firmware;
 import miroshka.model.ProgressCallback;
@@ -20,11 +22,14 @@ import miroshka.view.CustomAlert;
 import java.awt.*;
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 
 public class UIController {
+    @FXML
+    private CheckBox devModeCheckBox;
     @FXML
     private Button installButton, driversButton, minimizeButton, closeButton, saveSettingsButton;
     @FXML
@@ -48,8 +53,11 @@ public class UIController {
     @FXML
     private Hyperlink copyrightLink;
 
+    private PrintStream fileStream;
+    private boolean isDevModeEnabled = false;
     private Firmware currentFirmware = Firmware.CATHACK;
     private LangManager langManager;
+    private ConfigManager configManager;
 
     @FXML
     public void initialize() {
@@ -61,25 +69,49 @@ public class UIController {
         langManager.setLocale(new Locale("ru"));
         setLocalizedTexts();
 
+        initializeDeviceMenu();
+        initializeComPortMenu();
+        initializeFirmwareMenu();
+        initializeImages();
+        redirectSystemOutputToConsole();
+        updateFirmwareUI();
+
+        installEsptool();
+
+        SerialPortUtils.setListener(updatedPorts -> Platform.runLater(() -> {
+            comPortMenu.getItems().clear();
+            comPortMenu.getItems().addAll(updatedPorts);
+            if (!updatedPorts.isEmpty()) {
+                comPortMenu.getSelectionModel().select(0);
+            }
+        }));
+    }
+
+    private void initializeDeviceMenu() {
         deviceMenu.getItems().addAll("Plus2", "Card", "Plus1");
         deviceMenu.getSelectionModel().select("Plus2");
         deviceMenu.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> onDeviceMenuChange());
+    }
 
+    private void initializeComPortMenu() {
         List<String> ports = SerialPortUtils.getAvailablePorts();
         comPortMenu.getItems().addAll(ports);
         if (!comPortMenu.getItems().isEmpty()) {
             comPortMenu.getSelectionModel().select(0);
         }
+    }
 
+    private void initializeFirmwareMenu() {
         firmwareMenu.getItems().addAll(Firmware.values());
         firmwareMenu.setValue(currentFirmware);
+    }
 
+    private void initializeImages() {
         decorativeImageView1.setImage(new Image(getClass().getResourceAsStream("/miroshka/images/plus2.png")));
         decorativeImageView2.setImage(new Image(getClass().getResourceAsStream("/miroshka/images/typec.png")));
+    }
 
-        redirectSystemOutputToConsole();
-        updateFirmwareUI();
-
+    private void installEsptool() {
         ProgressCallback progressCallback = (bytesRead, totalBytes) -> Platform.runLater(() -> {
             double progress = totalBytes > 0 ? (double) bytesRead / totalBytes : 0;
             progressBar.setProgress(progress);
@@ -105,6 +137,7 @@ public class UIController {
                 return null;
             }
         };
+
         new Thread(installEsptoolTask).start();
 
         installEsptoolTask.setOnFailed(e -> Platform.runLater(() -> {
@@ -122,6 +155,46 @@ public class UIController {
     }
 
     @FXML
+    private void onDevModeToggle() {
+        isDevModeEnabled = devModeCheckBox.isSelected();
+        if (isDevModeEnabled) {
+            startLoggingToFile();
+        } else {
+            stopLoggingToFile();
+        }
+    }
+
+    private void startLoggingToFile() {
+        try {
+            File jarFile = new File(ConfigManager.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            String executableDir = jarFile.getParent();
+
+            File logFile = new File(executableDir, "log.txt");
+
+            fileStream = new PrintStream(new FileOutputStream(logFile, true), true, StandardCharsets.UTF_8);
+
+            System.setOut(fileStream);
+            System.setErr(fileStream);
+
+            System.out.println("Dev Mode enabled: Logs will be saved to " + logFile.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private void stopLoggingToFile() {
+        if (fileStream != null) {
+            fileStream.close();
+            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
+            System.out.println("Dev Mode disabled: Logs will no longer be saved to log.txt");
+        }
+    }
+
+    @FXML
     private void onLanguageChange() {
         String selectedLanguage = languageMenu.getValue();
         Locale locale;
@@ -133,6 +206,9 @@ public class UIController {
         }
 
         langManager.setLocale(locale);
+
+        configManager.setLanguage(locale.getLanguage());
+
         setLocalizedTexts();
     }
 
@@ -233,7 +309,8 @@ public class UIController {
                 try {
                     String firmwareUrl = currentFirmware.getDownloadUrl(selectedDevice);
                     File firmwareFile = new File(System.getProperty("user.home"), "latest_firmware.bin");
-                    FirmwareInstaller.flashFirmware(firmwareFile, comPort, progressBar, langManager);
+
+                    FirmwareInstaller.flashFirmware(firmwareFile, comPort, progressBar, langManager, firmwareUrl);
                 } catch (IOException | InterruptedException e) {
                     Platform.runLater(() -> showCustomAlert(langManager.getTranslation("error"),
                             langManager.getTranslation("firmware_installation_failed") + ": " + e.getMessage(),
@@ -324,6 +401,7 @@ public class UIController {
         Stage stage = (Stage) closeButton.getScene().getWindow();
         stage.close();
     }
+
     private void updateButtonColors() {
         String color = currentFirmware.getButtonColor();
         installButton.setStyle("-fx-background-color: " + color);
@@ -332,4 +410,26 @@ public class UIController {
         driversButton.setStyle("-fx-background-color: " + color);
         firmwareMenu.setStyle("-fx-background-color: " + color);
     }
+
+    @FXML
+    private void saveConfig() {
+        String selectedLanguage = languageMenu.getValue();
+        String languageCode = selectedLanguage.equals("Русский") ? "ru" : "en";
+
+        configManager.setConfigValue("language", languageCode);
+        configManager.setConfigValue("devMode", String.valueOf(devModeCheckBox.isSelected()));
+        configManager.setConfigValue("autoUpdate", String.valueOf(autoUpdateCheckBox.isSelected()));
+        configManager.setConfigValue("notifications", String.valueOf(notificationsCheckBox.isSelected()));
+        configManager.setConfigValue("device", deviceMenu.getValue());
+        configManager.setConfigValue("comPort", comPortMenu.getValue());
+
+        configManager.saveConfig();
+
+        showCustomAlert("Настройки", "Настройки успешно сохранены.", CustomAlert.AlertType.INFORMATION);
+    }
+
+    public void setConfigManager(ConfigManager configManager) {
+        this.configManager = configManager;
+    }
+
 }

@@ -9,9 +9,11 @@ module miroshka {
 
     requires java.net.http;
     requires java.desktop;
+    requires java.logging;
 
     opens miroshka.controller to javafx.fxml;
 
     exports miroshka;
     exports miroshka.model;
+    opens miroshka.installer to javafx.fxml;
 }

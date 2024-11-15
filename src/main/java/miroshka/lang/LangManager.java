@@ -27,7 +27,8 @@ public class LangManager {
             Properties properties = new Properties();
             try (InputStream input = getClass().getResourceAsStream("/miroshka/lang/" + lang + ".properties")) {
                 if (input != null) {
-                    properties.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+                    InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8);
+                    properties.load(reader);
                     translations.put(new Locale(lang), properties);
                 } else {
                     System.err.println("Не удалось найти файл перевода для языка: " + lang);
@@ -38,7 +39,6 @@ public class LangManager {
             }
         }
     }
-
 
     public void setLocale(Locale locale) {
         if (translations.containsKey(locale)) {

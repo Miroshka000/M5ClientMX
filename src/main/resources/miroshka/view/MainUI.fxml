@@ -38,12 +38,15 @@
                 <Label fx:id="betaSectionLabel" layoutX="76.0" layoutY="24.0" textFill="WHITE" />
                 <CheckBox fx:id="autoUpdateCheckBox" layoutX="77.0" layoutY="101.0" textFill="WHITE" />
                 <CheckBox fx:id="notificationsCheckBox" layoutX="77.0" layoutY="148.0" textFill="WHITE" />
-                <Button fx:id="saveSettingsButton" layoutX="70.0" layoutY="399.0" />
+                <CheckBox fx:id="devModeCheckBox" layoutX="77.0" layoutY="200.0" text="Developer Mode" textFill="WHITE" onAction="#onDevModeToggle" />
+
+                <Button fx:id="saveSettingsButton" layoutX="70.0" layoutY="399.0" text="Save Settings" onAction="#saveConfig" />
 
                 <Label fx:id="languageLabel" layoutX="510.0" layoutY="97.0" textFill="WHITE" />
                 <ComboBox fx:id="languageMenu" layoutX="593.0" layoutY="88.0" onAction="#onLanguageChange" />
             </AnchorPane>
         </Tab>
+
     </TabPane>
 
     <HBox layoutX="700.0" layoutY="10.0" spacing="10" />

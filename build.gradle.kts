@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "miroshka"
-version = "0.3.3"
+version = "0.3.4"
 
 repositories {
     mavenCentral()
@@ -32,7 +32,8 @@ tasks.named<JavaExec>("run") {
     jvmArgs = listOf(
         "--module-path", configurations.runtimeClasspath.get().joinToString(";"),
         "--add-modules", "javafx.controls,javafx.fxml,jdk.crypto.cryptoki",
-        "-Dapp.version=${project.version}"
+        "-Dapp.version=${project.version}",
+        "-Dfile.encoding=UTF-8"
     )
 }
 
@@ -54,7 +55,8 @@ jlink {
         jvmArgs = listOf(
             "--add-modules", "javafx.controls,javafx.fxml",
             "--module-path", configurations.runtimeClasspath.get().asPath,
-            "-Dapp.version=${project.version}"
+            "-Dapp.version=${project.version}",
+            "-Dfile.encoding=UTF-8"
         )
     }
 
