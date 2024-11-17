@@ -13,7 +13,7 @@ import java.util.Scanner;
 
 public enum Firmware {
     CATHACK("CatHack", "/miroshka/images/cathack.png", "#ff8e19",
-            "https://github.com/Stachugit/CatHack/releases/download/CatHackv1.3_IRfix/CatHack_v1.3.bin",
+            "https://github.com/Stachugit/CatHack/releases/download/CatHackv1.4/CatHack_v1.4.bin",
             "UNAVAILABLE",
             "UNAVAILABLE"),
     BRUCE("Bruce", "/miroshka/images/bruce.png", "#a82da4", "DYNAMIC", "DYNAMIC", "DYNAMIC"),
