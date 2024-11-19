@@ -58,6 +58,7 @@ public class UIController {
     private Firmware currentFirmware = Firmware.CATHACK;
     private LangManager langManager;
     private ConfigManager configManager;
+    private Stage primaryStage;
 
     @FXML
     public void initialize() {
@@ -397,10 +398,25 @@ public class UIController {
         stage.setIconified(true);
     }
 
+    public void setStage(Stage stage) {
+        this.primaryStage = stage;
+        this.primaryStage.setOnCloseRequest(event -> onWindowClose());
+    }
+
+    private void onWindowClose() {
+        SerialPortUtils.stopMonitoringPorts();
+        if (configManager != null) {
+            configManager.saveConfig();
+        }
+        Platform.exit();
+        System.exit(0);
+    }
+
     @FXML
     private void closeWindow() {
-        Stage stage = (Stage) closeButton.getScene().getWindow();
-        stage.close();
+        onWindowClose();
+        Platform.exit();
+        System.exit(0);
     }
 
     private void updateButtonColors() {

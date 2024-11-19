@@ -37,21 +37,12 @@ public class Main extends Application {
             UIController controller = fxmlLoader.getController();
             controller.setLangManager(new LangManager());
             controller.setConfigManager(configManager);
-
-            primaryStage.setOnCloseRequest(event -> onWindowClose());
+            controller.setStage(primaryStage);
 
             primaryStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void onWindowClose() {
-        SerialPortUtils.stopMonitoringPorts();
-        if (configManager != null) {
-            configManager.saveConfig();
-        }
-        Platform.exit();
     }
 
     private void initializeApp() {
